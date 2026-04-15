@@ -14,11 +14,14 @@ When done, run: python checkpoints/check_day01.py
 """
 
 import sqlite3
+import os
+
+DB_PATH = os.path.join(os.path.dirname(__file__), "taskflow.db")
 
 
 def create_database():
     # Step 1: Connect to database (creates taskflow.db if not exists)
-    conn = sqlite3.connect("days/taskflow.db")
+    conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
 
     print("=== TaskFlow Database Setup ===\n")
@@ -35,7 +38,14 @@ def create_database():
 
     print("Creating users table...")
     cursor.execute("""
-        -- WRITE YOUR SQL HERE
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            email TEXT NOT NULL UNIQUE,
+            full_name TEXT NOT NULL,
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
     """)
 
     # ── Step 3: Create projects table ──
@@ -49,7 +59,13 @@ def create_database():
 
     print("Creating projects table...")
     cursor.execute("""
-        -- WRITE YOUR SQL HERE
+        CREATE TABLE IF NOT EXISTS projects (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            description TEXT,
+            status TEXT NOT NULL DEFAULT 'planning' CHECK(status IN ('planning', 'active', 'paused', 'completed')),
+            created_at TEXT NOT NULL DEFAULT (datetime('now'))
+        )
     """)
 
     # ── Step 4: Save changes ──
@@ -59,11 +75,12 @@ def create_database():
     print("\n=== Verification ===")
 
     # TODO: Query sqlite_master to get all table names
-    # tables = cursor.execute("SELECT ... FROM ...").fetchall()
-    # print(f"Tables found: {[t[0] for t in tables]}")
+    tables = cursor.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    print(f"Tables found: {[t[0] for t in tables]}")
 
     # TODO: For each table, print its schema using PRAGMA table_info(table_name)
-    # This returns: (cid, name, type, notnull, default_value, pk)
+    user_columns = cursor.execute("PRAGMA table_info(users)").fetchall()
+    print(user_columns)
 
     conn.close()
     print("\nDone!")
